@@ -40,8 +40,16 @@ router.post('/startSleep',function(req,res,next){
 router.post('/cancelSleep',function(req,res,next){
 	var id =req.body.cancel;
 
-	member.cancelsleep(id,function(success){
-		res.json(success);
+	mongodb.cancelsleep(id,function(success){
+		if(success==1)
+		{
+			member.cancelsleep(id,function(success){
+				res.json(success);
+			});
+		}
+		else{
+			res.json(success);
+		}
 	});
 });
 
