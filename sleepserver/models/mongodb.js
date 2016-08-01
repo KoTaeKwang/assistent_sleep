@@ -56,6 +56,51 @@ exports.pushSleep = function(data,callback){
 				if(err){console.log('err',err); return;}
 				callback(null);
 			})
+		},function(callback){
+			pool.getConnection(function(err,conn){
+				if(err){callback(err);return;}
+				conn.query("select id,heartrate,count from heartrate where id=?",data.id,function(err,rows){
+					console.log("rows.length",rows.length);
+					if(rows==null){ //처음
+						conn.release();
+						callback(null,0,rows.length);
+					}else{
+						if(rows.length==10){
+							var heartrateAdd=0;
+							rows.forEach(function(value){
+								heartrateAdd+=value.heartrate;
+							})
+							heartrateAdd=Math.floor(heartrateAdd/10); //10회 평균값
+							conn.release();
+							callback(null,heartrateAdd,10);
+						}else{
+							conn.release();
+							callback(null,0,rows.length);
+						}
+					}
+				})
+			});
+		},function(heartrate,count,callback){
+			if(count!=10){ //추가
+				pool.getConnection(function(err,conn){
+					if(err){console.log(err);callback(err);return;}
+					conn.query("insert into heartrate(id,heartrate,count) values(?,?,?)",[data.id,data.heartRate,count+1],function(err,row){
+						if(err){console.log(err);conn.release();callback(err);return;}
+						conn.release();
+						callback(null,1);
+						})
+				});
+			}else{ //비교
+				console.log("heartrate",heartrate," data.heartrates - > ",data.heartRate);
+				console.log(heartrate*0.9); //잠
+				if((heartrate*0.9)>=data.heartRate){ //여기서 램과,비램 처리해야하나
+					console.log("잔다");
+					callback(null,3);
+				}
+				else{ //안잠
+				callback(null,3);
+				}
+			}
 		}
 		],function(err,results){
 			callback(3);
@@ -74,24 +119,39 @@ exports.cancelsleep = function(data,callback){
 				console.log('sdate',sdate)
 				conn.query("select starttime,endtime from sleeptime where id =? and endtime>=?",[data,sdate],function(err,row){
 						if(err){conn.release(); callback(2); console.log('err',err); return;}
-						console.log('row',row)
-						console.log('id',data)
-						console.log('row.startime',row[0].starttime)
-						console.log('row.endtime',row[0].endtime)
+						console.log('row',row);
+						console.log('id',data);
+						if(row.length==0){
+							callback(null,0,0);
+						}
+					else{
+						console.log('row.startime',row[0].starttime);
+						console.log('row.endtime',row[0].endtime);
+						conn.release();
 						callback(null,row[0].starttime,row[0].endtime);
+						}
 				})
 			});
 		},function(starttime,endtime,callback){
-			move.remove({date:{$gte:starttime}},function(err,conn){
-			if(err){callback(2); console.log('err',err); return;}
-				callback(null,starttime,endtime);
-			})
+			if(starttime==0){
+				callback(null,0,0);
+			}
+			else{
+				move.remove({date:{$gte:starttime}},function(err,conn){
+				if(err){callback(2); console.log('err',err); return;}
+					callback(null,starttime,endtime);
+				})
+			}
 		},function(starttime,endtime,callback){
-
-			heartRate.remove({date:{$gte:starttime}},function(err,conn){
-				if(err){ callback(2); console.log('err',err); return;}
+			if(starttime==0){
 				callback(null);
-			})
+			}
+			else{
+				heartRate.remove({date:{$gte:starttime}},function(err,conn){
+					if(err){ callback(2); console.log('err',err); return;}
+					callback(null);
+				})
+			}
 		}
 		],function(err,results){
 			callback(1);
@@ -99,16 +159,7 @@ exports.cancelsleep = function(data,callback){
 }
 
 
-exports.wakeupSleep = function(data,callback){
 
-	var heartRate=data.heartRate;
-
-	if(heartRate>=123)
-		callback(5);
-
-	else
-		callback(1);
-}
 
 exports.visualdata = function(data,callback){
 	async.waterfall([

@@ -72,7 +72,7 @@ router.post('/wakeupSleep',function(req,res,next){
 	var id = req.body.id;
 	var datas={heartRate:heartRate,id:id};
 
-	mongodb.wakeupSleep(datas,function(success){
+	member.wakeupSleep(datas,function(success){
 		res.json(success);
 	});
 });
@@ -85,7 +85,15 @@ router.get('/pusharduino',function(req,res,next){
 
 router.post('/visualdata',function(req,res,next){ //자는동안 심박수, 움직임
 	var id=req.body.id;
-  var obj=[{x:3,y:23},{x:4,y:30},{x:5,y:12}];
+  var obj=[];
+
+ 	for(var i=0;i<31;i++){
+ 		var obj2={};
+ 		obj2.x=i+1;
+ 		obj2.y=i%5+1;
+ 		obj.push(obj2);
+ 	}
+
   res.json(obj);
 /*	mongodb.visualdata(id,function(success){
 		res.json(success);

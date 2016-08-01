@@ -6,7 +6,6 @@ var plotly = require('plotly')("KoTaeKwang","oawu6tmili");
 
 
 exports.login = function(data,callback){
-
 	pool.getConnection(function(err,conn){
 		if(err){callback(err); return;}
 		conn.query("select id from member where id=? and pwd=? ",[data.id,data.pwd],function(err,rows){
@@ -22,34 +21,88 @@ exports.login = function(data,callback){
 }
 
 exports.startsleep = function(data,callback){
-	pool.getConnection(function(err,conn){
-		if(err){callback(err); return;}
-		conn.query("insert into sleeptime(id,starttime,endtime) values(?,?,?)",[data.id,data.starttime,data.endtime],function(err,rows){
-			if(err){conn.release();callback(0);return;}
-			conn.release();
-			if(rows)
-			callback(1);
-			else
-			callback(2);
-		})
+	async.waterfall([
+		function(callback){
+			pool.getConnection(function(err,conn){
+				if(err){callback(err);return;}
+				conn.query("delete from heartrate where id=?",data.id,function(err,row){
+					if(err){conn.release();callback(err);console.log(err);return;}
+					console.log("삭제성공");
+					callback(null);
+				})
+			})
+		},function(callback){
+			pool.getConnection(function(err,conn){
+				if(err){callback(err); return;}
+				conn.query("insert into sleeptime(id,starttime,endtime) values(?,?,?)",[data.id,data.starttime,data.endtime],function(err,rows){
+					if(err){conn.release();callback(0);return;}
+					conn.release();
+					if(rows)
+					callback(null,1);
+					else
+					callback(null,2);
+				});
+			});
+		}
+		],function(err,results){
+			callback(results);
 	})
+
 }
 
 exports.cancelsleep = function(data,callback){
-			pool.getConnection(function(err,conn){
-				if(err){callback(err);return;}
-				var date = new Date()
-				var dates=moment(date).format('YYYY-MM-DD HH:mm:ss')
-				var sdate = dates.toString()
-				console.log('sdate',sdate)
-				conn.query("delete from sleeptime where id=? and endtime>=?",[data,sdate],function(err,row){
-						if(err){conn.release(); callback(2); console.log('err',err); return;}
+		async.waterfall([
+			function(callback){
+				pool.getConnection(function(err,conn){
+					if(err){callback(err);return;}
+					var date = new Date()
+					var dates=moment(date).format('YYYY-MM-DD HH:mm:ss')
+					var sdate = dates.toString()
+					console.log('sdate',sdate)
+					conn.query("delete from sleeptime where id=? and endtime>=?",[data,sdate],function(err,row){
+							if(err){conn.release(); callback(2); console.log('err',err); return;}
+							conn.release();
+							callback(null);
+					})
+				});
+			},function(callback){
+				pool.getConnection(function(err,conn){
+					if(err){console.log(err);callback(err);return;}
+					conn.query("delete from heartrate where id=?",data,function(err,row){
+						if(err){conn.release();console.log(err);callback(err);return;}
 						conn.release();
-						callback(1);
-				})
-			});
+						callback(null,1);
+					})
+				});
+			}
+			],
+			function(err,results){
+				callback(results);
+			})
 }
 
+exports.wakeupSleep = function(data,callback){
+	pool.getConnection(function(err,conn){
+		if(err){callback(err);return;}
+		conn.query("select heartrate from heartrate where id=?",data.id,function(err,rows){
+			if(err){console.log(err);conn.release();callback(err);return;}
+			var heartrateAdd=0;
+			rows.forEach(function(value){
+				heartrateAdd+=value.heartrate;
+			})
+			heartrateAdd=Math.floor(heartrateAdd/10);
+			console.log("heartrateAdd ",heartrateAdd,"   *1.5",heartrateAdd*1.5)
+			if(data.heartRate>heartrateAdd*1.5){
+				conn.release();
+				callback(5);
+			}
+			else{
+				conn.release();
+				callback(1);
+			}
+		})
+	});
+}
 
 exports.sleepTimeData = function(data,callback){
 
