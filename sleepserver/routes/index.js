@@ -1,4 +1,5 @@
 var express = require('express');
+
 var router = express.Router();
 var mongodb = require('../models/mongodb');
 var member = require('../models/memberdb');
@@ -38,8 +39,9 @@ router.post('/startSleep',function(req,res,next){
 });
 
 router.post('/cancelSleep',function(req,res,next){
+	console.log("canclesleep");
 	var id =req.body.cancel;
-
+	console.log("cancel id : ",id);
 	mongodb.cancelsleep(id,function(success){
 		if(success==1)
 		{
@@ -53,7 +55,7 @@ router.post('/cancelSleep',function(req,res,next){
 	});
 });
 
-router.post('/pushSleep',function(req,res,next){
+router.post('/pushSleep',function(req,res,next){  //자고있을때
 	var heartRate = req.body.heartRate;
 	var move = req.body.move;
 	var id = req.body.id;
@@ -64,5 +66,47 @@ router.post('/pushSleep',function(req,res,next){
 		res.json(success);
 	})
 });
+
+router.post('/wakeupSleep',function(req,res,next){
+	var heartRate = req.body.heartRate;
+	var id = req.body.id;
+	var datas={heartRate:heartRate,id:id};
+
+	mongodb.wakeupSleep(datas,function(success){
+		res.json(success);
+	});
+});
+
+
+router.get('/pusharduino',function(req,res,next){
+	res.json(1);
+});
+
+
+router.post('/visualdata',function(req,res,next){ //자는동안 심박수, 움직임
+	var id=req.body.id;
+  var obj=[{x:3,y:23},{x:4,y:30},{x:5,y:12}];
+  res.json(obj);
+/*	mongodb.visualdata(id,function(success){
+		res.json(success);
+	})*/
+});
+
+
+
+router.post('/sleepTimeData',function(req,res,next){ //일별로 잔 총시간
+	var id= req.body.id;
+
+	member.sleepTimeData(id,function(success){
+		res.json(success);
+	});
+});
+
+
+router.get('/ageData',function(req,res,next){ //나이별 수면시간
+	member.ageData(function(success){
+		res.json(success);
+	})
+})
 
 module.exports = router;

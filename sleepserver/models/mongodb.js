@@ -58,7 +58,7 @@ exports.pushSleep = function(data,callback){
 			})
 		}
 		],function(err,results){
-			callback(1);
+			callback(3);
 	})
 }
 
@@ -73,7 +73,7 @@ exports.cancelsleep = function(data,callback){
 
 				console.log('sdate',sdate)
 				conn.query("select starttime,endtime from sleeptime where id =? and endtime>=?",[data,sdate],function(err,row){
-						if(err){conn.release(); callback(0); console.log('err',err); return;}
+						if(err){conn.release(); callback(2); console.log('err',err); return;}
 						console.log('row',row)
 						console.log('id',data)
 						console.log('row.startime',row[0].starttime)
@@ -83,16 +83,63 @@ exports.cancelsleep = function(data,callback){
 			});
 		},function(starttime,endtime,callback){
 			move.remove({date:{$gte:starttime}},function(err,conn){
-			if(err){callback(0); console.log('err',err); return;}
+			if(err){callback(2); console.log('err',err); return;}
 				callback(null,starttime,endtime);
 			})
 		},function(starttime,endtime,callback){
+
 			heartRate.remove({date:{$gte:starttime}},function(err,conn){
-				if(err){ callback(0); console.log('err',err); return;}
+				if(err){ callback(2); console.log('err',err); return;}
 				callback(null);
 			})
 		}
 		],function(err,results){
 			callback(1);
 	});
+}
+
+
+exports.wakeupSleep = function(data,callback){
+
+	var heartRate=data.heartRate;
+
+	if(heartRate>=123)
+		callback(5);
+
+	else
+		callback(1);
+}
+
+exports.visualdata = function(data,callback){
+	async.waterfall([
+		function(callback){
+			pool.getConnection(function(err,conn){
+				if(err){callback(err);return;}
+				conn.query("select starttime, endtime from sleeptime where id=? order by endtime desc",data,function(err,row){
+					if(err){conn.release(); callback(2); console.log('err',err); return;}
+					console.log(row[0].starttime);
+					console.log(row[0].endtime);
+				callback(null,row[0].starttime,row[0].endtime);
+				})
+			});
+		},
+		function(starttime,endtime,callback){
+			heartRate.find({id:data,date:{$gte:starttime,$lte:endtime}},{id:1,date:1,heartRate:1,_id:0},function(err,results){
+				callback(null,starttime,endtime,results);
+			})
+		},
+		function(starttime,endtime,heartRates,callback){
+			move.find({id:data,date:{$gte:starttime,$lte:endtime}},{id:1,date:1,move:1,_id:0},function(err,moves){
+				console.log("results",moves[0]);
+				var obj = {};
+				obj.move=moves;
+				obj.heartRate=heartRates;
+				console.log("results",obj);
+
+				callback(null,obj);
+			})
+		}
+		],function(err,results){
+			callback(results);
+		})
 }
