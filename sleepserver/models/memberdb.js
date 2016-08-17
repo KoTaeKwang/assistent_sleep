@@ -28,6 +28,7 @@ exports.startsleep = function(data,callback){
 				conn.query("delete from heartrate where id=?",data.id,function(err,row){
 					if(err){conn.release();callback(err);console.log(err);return;}
 					console.log("삭제성공");
+					conn.release();
 					callback(null);
 				})
 			})
@@ -94,11 +95,11 @@ exports.wakeupSleep = function(data,callback){
 			console.log("heartrateAdd ",heartrateAdd,"   *1.5",heartrateAdd*1.5)
 			if(data.heartRate>heartrateAdd*1.5){
 				conn.release();
-				callback(5);
+				callback(6);
 			}
 			else{
 				conn.release();
-				callback(1);
+				callback(5);
 			}
 		})
 	});

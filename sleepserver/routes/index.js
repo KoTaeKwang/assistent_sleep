@@ -6,7 +6,8 @@ var member = require('../models/memberdb');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  console.log("asdsadsad");
+  res.json('ads');
 });
 
 router.post('/login',function(req,res,next){
@@ -71,10 +72,12 @@ router.post('/wakeupSleep',function(req,res,next){
 	var heartRate = req.body.heartRate;
 	var id = req.body.id;
 	var datas={heartRate:heartRate,id:id};
-
+	console.log(datas);
+	/*
 	member.wakeupSleep(datas,function(success){
 		res.json(success);
-	});
+	});*/
+	res.json(6);
 });
 
 
@@ -94,10 +97,10 @@ router.post('/visualdata',function(req,res,next){ //자는동안 심박수, 움�
  		obj.push(obj2);
  	}
 
-  res.json(obj);
-/*	mongodb.visualdata(id,function(success){
+ // res.json(obj);
+mongodb.visualdata(id,function(success){
 		res.json(success);
-	})*/
+	})
 });
 
 
@@ -116,5 +119,13 @@ router.get('/ageData',function(req,res,next){ //나이별 수면시간
 		res.json(success);
 	})
 })
+
+
+router.get('/visdata',function(req,res,next){
+	mongodb.visdata(function(success){
+		res.json(success);
+	})
+});
+
 
 module.exports = router;
