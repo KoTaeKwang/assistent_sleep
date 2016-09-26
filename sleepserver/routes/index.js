@@ -3,6 +3,8 @@ var express = require('express');
 var router = express.Router();
 var mongodb = require('../models/mongodb');
 var member = require('../models/memberdb');
+var state = 0;
+var ramcount=0;
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -30,7 +32,6 @@ router.post('/startSleep',function(req,res,next){
 
 	console.log('starttime',starttime);
 	console.log('endtime',endtime);
-
 
 	var datas ={starttime : starttime, endtime : endtime, id: id};
 	console.log('startsleep',datas);
@@ -64,6 +65,19 @@ router.post('/pushSleep',function(req,res,next){  //자고있을때
 	var datas={heartRate:heartRate,move:move,id:id,date:date};
 	console.log('datas',datas);
 	mongodb.pushSleep(datas,function(success){
+		if(success==3)
+					ramcount++;
+		else
+					ramcount=0;
+		console.log('ramcount : ',ramcount);
+		if(success==3&&ramcount>30)
+			state=1;
+		else
+		{
+			state=0;
+		}
+
+
 		res.json(success);
 	})
 });
@@ -73,16 +87,14 @@ router.post('/wakeupSleep',function(req,res,next){
 	var id = req.body.id;
 	var datas={heartRate:heartRate,id:id};
 	console.log(datas);
-	/*
 	member.wakeupSleep(datas,function(success){
 		res.json(success);
-	});*/
-	res.json(6);
+	});
 });
 
 
 router.get('/pusharduino',function(req,res,next){
-	res.json(1);
+	res.json(state);
 });
 
 

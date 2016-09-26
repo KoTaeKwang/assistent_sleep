@@ -13,6 +13,8 @@ exports.login = function(data,callback){
 			conn.release();
 
 			if(rows!=null)
+
+
 				callback(1);
 			else
 				callback(2);
@@ -91,7 +93,7 @@ exports.wakeupSleep = function(data,callback){
 			rows.forEach(function(value){
 				heartrateAdd+=value.heartrate;
 			})
-			heartrateAdd=Math.floor(heartrateAdd/10);
+			heartrateAdd=Math.floor(heartrateAdd/6);
 			console.log("heartrateAdd ",heartrateAdd,"   *1.5",heartrateAdd*1.5)
 			if(data.heartRate>heartrateAdd*1.5){
 				conn.release();

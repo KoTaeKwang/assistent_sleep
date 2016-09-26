@@ -46,7 +46,13 @@ exports.pushSleep = function(data,callback){
 		id: data.id,
 		date : dates
 	});
-
+//-1이면
+	if(data.heartRate<0)
+	{
+		log.info("-1");
+		callback(4);
+	}
+	else{
 	async.waterfall([
 		function(callback){
 			moves.save(function(err,conn){
@@ -71,7 +77,7 @@ exports.pushSleep = function(data,callback){
 					console.log('dates',dates);
 					var subdate = row[0].endtime-dates;
 					subdate=Math.floor(subdate/(60*1000));
-					console.log(subdate);
+					console.log(subdate); // 이게 분
 					conn.release();
 					callback(null);
 				});
@@ -85,14 +91,14 @@ exports.pushSleep = function(data,callback){
 						conn.release();
 						callback(null,0,rows.length);
 					}else{
-						if(rows.length==10){
+						if(rows.length==6){
 							var heartrateAdd=0;
 							rows.forEach(function(value){
 								heartrateAdd+=value.heartrate;
 							})
-							heartrateAdd=Math.floor(heartrateAdd/10); //10회 평균값
+							heartrateAdd=Math.floor(heartrateAdd/6); //10회 평균값
 							conn.release();
-							callback(null,heartrateAdd,10);
+							callback(null,heartrateAdd,6);
 						}else{
 							conn.release();
 							callback(null,0,rows.length);
@@ -101,7 +107,7 @@ exports.pushSleep = function(data,callback){
 				})
 			});
 		},function(heartrate,count,callback){
-			if(count!=10){ //추가
+			if(count!=6){ //추가
 				pool.getConnection(function(err,conn){
 					if(err){console.log(err);callback(err);return;}
 					conn.query("insert into heartrate(id,heartrate,count) values(?,?,?)",[data.id,data.heartRate,count+1],function(err,row){
@@ -113,37 +119,40 @@ exports.pushSleep = function(data,callback){
 				});
 			}else{ //비교
 				console.log("heartrate",heartrate," data.heartrates - > ",data.heartRate);
-				console.log(heartrate*0.85); //잠
-				if((heartrate*0.85)>=data.heartRate){ //여기서 램과,비램 처리해야하나
+				console.log("잠->",heartrate*0.95); //잠
+				console.log("램수면->",heartrate*0.95*0.9);
+				if((heartrate*0.95)>=data.heartRate){ //여기서 램과,비램 처리해야하나
 					//console.log("잔다");
-					log.info("수면");
-						if((heartrate*0.85)>=data.heartRate&&data.heartRate>=(heartrate*0.85*0.9))
+					flag=true;
+						if((heartrate*0.95)>=data.heartRate&&data.heartRate>=(heartrate*0.95*0.9))
 						{
 							//램수면   //이때 enddate 30분전이면 7
 							log.info("램수면");
 							callback(null,3);
-							flag=true;
+						//	flag=true;
 						}
 						else{//비램수면
-							if(flag)
-							{
+						//	if(flag)
+							//{
 								log.info("비램수면");
 								callback(null,4);
-								flag=false;
-							}
-							else
-							callback(null,1);
+							//	flag=false;
+							//}
 						}
 				}
 				else{ //안잠
+					if(!flag)
 					log.info("비수면");
-				callback(null,1);
+					else
+					log.info("램수면");
+				callback(null,3);
 				}
 			}
 		}
 		],function(err,results){
 			callback(results);
 	})
+	}
 }
 
 exports.cancelsleep = function(data,callback){
@@ -196,9 +205,6 @@ exports.cancelsleep = function(data,callback){
 			callback(1);
 	});
 }
-
-
-
 
 exports.visualdata = function(data,callback){
 	async.waterfall([
@@ -255,7 +261,6 @@ exports.visualdata = function(data,callback){
 
 
 exports.visdata = function(callback){
-
 	async.waterfall([
 		function(callback){
 			pool.getConnection(function(err,conn){
