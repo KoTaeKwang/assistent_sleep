@@ -1,0 +1,4 @@
+build main_build: phony sleep_assistant_gear
+build all: phony main_build
+default all
+edje-cc-options = -deps

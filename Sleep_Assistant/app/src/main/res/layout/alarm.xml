@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <DatePicker
+        android:id="@+id/date_picker"
+        android:layout_height="200dp"
+        android:layout_width="wrap_content"
+        android:datePickerMode="spinner"
+        android:calendarViewShown="false" />
+
+    <TimePicker
+        android:id="@+id/time_picker"
+        android:timePickerMode="spinner"
+        android:layout_width="235dp"
+        android:layout_height="150dp"
+        android:layout_alignBottom="@+id/date_picker"
+        android:layout_alignParentStart="true" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <Button
+            android:id="@+id/sleepmode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SleepMode"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true" />
+        <Button
+            android:id="@+id/cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:layout_alignParentTop="true"
+            android:layout_toEndOf="@+id/sleepmode" />
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Show"
+            android:id="@+id/show"
+            android:layout_gravity="right"
+            android:layout_below="@+id/sleepmode"
+            android:layout_alignParentStart="true" />
+
+
+    </RelativeLayout>
+
+</LinearLayout>
