@@ -13,8 +13,6 @@ exports.login = function(data,callback){
 			conn.release();
 
 			if(rows!=null)
-
-
 				callback(1);
 			else
 				callback(2);
@@ -37,7 +35,8 @@ exports.startsleep = function(data,callback){
 		},function(callback){
 			pool.getConnection(function(err,conn){
 				if(err){callback(err); return;}
-				conn.query("insert into sleeptime(id,starttime,endtime) values(?,?,?)",[data.id,data.starttime,data.endtime],function(err,rows){
+				conn.query("insert into sleeptime(id,starttime,endtime) values(?,?,?)",
+					[data.id,data.starttime,data.endtime],function(err,rows){
 					if(err){conn.release();callback(0);return;}
 					conn.release();
 					if(rows)
@@ -61,7 +60,6 @@ exports.cancelsleep = function(data,callback){
 					var date = new Date()
 					var dates=moment(date).format('YYYY-MM-DD HH:mm:ss')
 					var sdate = dates.toString()
-					console.log('sdate',sdate)
 					conn.query("delete from sleeptime where id=? and endtime>=?",[data,sdate],function(err,row){
 							if(err){conn.release(); callback(2); console.log('err',err); return;}
 							conn.release();
@@ -97,21 +95,21 @@ exports.wakeupSleep = function(data,callback){
 			console.log("heartrateAdd ",heartrateAdd,"   *1.5",heartrateAdd*1.5)
 			if(data.heartRate>heartrateAdd*1.5){
 				conn.release();
-				callback(6);
+				callback(6); //알람 종료
 			}
 			else{
 				conn.release();
-				callback(5);
+				callback(5); //알라 ㅁ유지
 			}
 		})
 	});
 }
 
 exports.sleepTimeData = function(data,callback){
-
 		pool.getConnection(function(err,conn){
 			if(err){callback(err);return;}
-			conn.query("select id,starttime,endtime from sleeptime where id=?",data,function(err,rows){
+			conn.query("select id,starttime,endtime from sleeptime where id=?",
+				data,function(err,rows){
 				var obj=[];
 
 				rows.forEach(function(value){
@@ -152,7 +150,8 @@ exports.ageData = function(callback){
 				}
 				callback(null);
 			},function(callback){
-				conn.query("select m.id, age, starttime, endtime from member m join sleeptime s on m.id=s.id",function(err,rows){
+				conn.query("select m.id, age, starttime, endtime from member m join sleeptime s on m.id=s.id",
+					function(err,rows){
 					rows.forEach(function(value){
 						date = value.endtime-value.starttime;
 						date=date/(60*1000);

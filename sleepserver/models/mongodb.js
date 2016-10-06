@@ -49,7 +49,7 @@ exports.pushSleep = function(data,callback){
 //-1이면
 	if(data.heartRate<0)
 	{
-		log.info("-1");
+	//	log.info("-1");
 		callback(4);
 	}
 	else{
@@ -62,7 +62,7 @@ exports.pushSleep = function(data,callback){
 		},function(callback){
 			heartRates.save(function(err,conn){
 				if(err){console.log('err',err); return;}
-				log.info("heartrate : ",data.heartRate," date -> ",dates);
+				log.info("id  :  ",data.id,"    heartrate : ",data.heartRate,"    date : ",dates);
 				callback(null);
 			})
 		},function(callback){
@@ -91,12 +91,12 @@ exports.pushSleep = function(data,callback){
 						conn.release();
 						callback(null,0,rows.length);
 					}else{
-						if(rows.length==6){
+						if(rows.length==6){ //6개일 경우
 							var heartrateAdd=0;
 							rows.forEach(function(value){
 								heartrateAdd+=value.heartrate;
 							})
-							heartrateAdd=Math.floor(heartrateAdd/6); //10회 평균값
+							heartrateAdd=Math.floor(heartrateAdd/6); // 평균값
 							conn.release();
 							callback(null,heartrateAdd,6);
 						}else{
@@ -118,34 +118,31 @@ exports.pushSleep = function(data,callback){
 						})
 				});
 			}else{ //비교
-				console.log("heartrate",heartrate," data.heartrates - > ",data.heartRate);
-				console.log("잠->",heartrate*0.95); //잠
-				console.log("램수면->",heartrate*0.95*0.9);
-				if((heartrate*0.95)>=data.heartRate){ //여기서 램과,비램 처리해야하나
-					//console.log("잔다");
+
+				var sleep = heartrate*0.93;
+				var remsleep =sleep*0.9;
+
+				console.log("평균 심박수 :",heartrate," data.heartrates : ",data.heartRate);
+				console.log("잠->",sleep); //잠
+				console.log("램수면->",remsleep);
+				if(sleep>=data.heartRate){ //수면중
 					flag=true;
-						if((heartrate*0.95)>=data.heartRate&&data.heartRate>=(heartrate*0.95*0.9))
+						if(sleep>=data.heartRate&&data.heartRate>=remsleep)//램수면
 						{
-							//램수면   //이때 enddate 30분전이면 7
 							log.info("램수면");
 							callback(null,3);
-						//	flag=true;
 						}
 						else{//비램수면
-						//	if(flag)
-							//{
 								log.info("비램수면");
 								callback(null,4);
-							//	flag=false;
-							//}
 						}
 				}
-				else{ //안잠
+				else{ //비수면중
 					if(!flag)
 					log.info("비수면");
 					else
-					log.info("램수면");
-				callback(null,3);
+					log.info("램수면"); //수면모드중 깨어있을 때
+					callback(null,3);
 				}
 			}
 		}
@@ -154,6 +151,7 @@ exports.pushSleep = function(data,callback){
 	})
 	}
 }
+
 
 exports.cancelsleep = function(data,callback){
 	async.waterfall([
@@ -229,8 +227,8 @@ exports.visualdata = function(data,callback){
 
 				results.map(function(value){
 					var obj={};
-					obj.heartrate=value.heartRate;
-					obj.date=moment(value.date).format('YYYY-MM-DD HH:mm:ss');
+					obj.y=value.heartRate;
+					obj.x=moment(value.date).format('YYYY-MM-DD HH:mm:ss');
 					heartrate.push(obj);
 				})
 
@@ -248,10 +246,11 @@ exports.visualdata = function(data,callback){
 					move.push(obj);
 				});
 
-				var obj = {};
-				obj.move=move;
-				obj.heartRate=heartRates;
-				callback(null,obj);
+				//var obj = {};
+				//obj.move=move;
+				//obj.heartRate=heartRates;
+
+				callback(null,heartRates);
 			})
 		}
 		],function(err,results){
